@@ -1,0 +1,921 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ASTROCARE | Mission Ground Control</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0;font-family:Arial,sans-serif}
+body{background:#070c19;color:#edf4ff}
+header{height:75px;background:#101b30;border-bottom:1px solid #293b59;
+display:flex;justify-content:space-between;align-items:center;padding:15px 25px}
+.logo{font-size:25px;font-weight:bold;color:#39d9ff;letter-spacing:3px}
+.sub{font-size:11px;color:#8da1c2;margin-top:5px}
+.online{color:#42e6a0;font-size:12px}
+.layout{display:flex;min-height:calc(100vh - 75px)}
+.sidebar{width:220px;background:#0c1528;padding:20px 12px;border-right:1px solid #293b59}
+.sidebar h4{font-size:11px;color:#7287a9;margin:15px 10px}
+.sidebar button{display:block;width:100%;padding:13px;background:transparent;
+color:#b8c9e2;border:0;text-align:left;border-radius:7px;cursor:pointer;margin:4px 0}
+.sidebar button:hover,.sidebar button.active{background:#193253;color:#39d9ff}
+main{flex:1;padding:25px;min-width:0}
+.page{display:none}.page.active{display:block}
+.heading{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:15px;margin-bottom:22px}
+h1{font-size:24px}.muted{color:#8498b9;font-size:12px;margin-top:7px}
+h2{font-size:18px;margin:22px 0 14px}
+h3{font-size:14px;color:#b8c9e2;margin-bottom:12px}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:18px}
+.card{background:#111e34;border:1px solid #283e60;border-radius:11px;padding:18px;min-width:0}
+.value{font-size:27px;font-weight:bold;margin:12px 0 5px}
+.blue{color:#39d9ff}.green{color:#42e6a0}.orange{color:#ffbb65}
+.red{color:#ff647c}
+.small{font-size:11px;color:#8498b9}
+.tag{padding:7px 12px;border-radius:20px;font-size:11px;background:#173c35;color:#42e6a0}
+select,input{background:#101e35;border:1px solid #365174;color:white;padding:11px;border-radius:6px}
+button.action{background:#087fa8;color:white;padding:11px 15px;border:0;border-radius:6px;cursor:pointer}
+button.action:hover{background:#079bc9}
+button.danger{background:#a72e48}
+.mission-bar{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:20px}
+.astronaut-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:15px}
+.astronaut{cursor:pointer;transition:.2s}
+.astronaut:hover{border-color:#39d9ff;transform:translateY(-2px)}
+.astronaut.selected{border:1px solid #39d9ff;background:#152944}
+.member-actions{display:flex;gap:7px;flex-wrap:wrap;margin-top:12px}
+.member-actions button{font-size:11px;padding:9px 11px}
+.avatar{font-size:34px;margin-bottom:12px}
+.astronaut h3{font-size:16px;color:white}
+.status{font-size:11px;margin-top:10px}
+.status.normal{color:#42e6a0}
+.status.warning{color:#ffbb65}
+.status.critical{color:#ff647c}
+.two{display:grid;grid-template-columns:1.4fr 1fr;gap:16px}
+.metric{display:flex;justify-content:space-between;padding:13px 0;
+border-bottom:1px solid #2a3a55;font-size:13px;gap:10px}
+.metric:last-child{border:0}
+.alert{padding:13px;border-radius:7px;margin-bottom:10px;
+background:#30291c;border:1px solid #715b31;font-size:12px}
+.alert.critical{background:#321a27;border-color:#81334c}
+.alert.normal{background:#122c29;border-color:#245c4e}
+table{width:100%;border-collapse:collapse;font-size:12px}
+td,th{text-align:left;padding:13px;border-bottom:1px solid #2b3b56}
+th{color:#39d9ff}
+.chart{height:260px}
+textarea{width:100%;height:90px;background:#0b172b;border:1px solid #344b6c;
+color:white;padding:12px;border-radius:7px;resize:vertical}
+footer{text-align:center;padding:25px;color:#7287a9;font-size:11px}
+@media(max-width:1000px){.grid{grid-template-columns:repeat(2,1fr)}
+.astronaut-grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:650px){.layout{display:block}.sidebar{width:100%}
+.sidebar button{width:48%;display:inline-block}
+main{padding:15px}.two{grid-template-columns:1fr}
+.astronaut-grid{grid-template-columns:1fr}
+header{padding:12px}.logo{font-size:19px}}
+</style>
+</head>
+
+<body>
+
+<header>
+ <div>
+  <div class="logo">✦ ASTROCARE</div>
+  <div class="sub">MULTI-ASTRONAUT HEALTH INTELLIGENCE SYSTEM</div>
+ </div>
+ <div class="online">● GROUND STATION CONNECTED</div>
+</header>
+
+<div class="layout">
+
+<aside class="sidebar">
+ <h4>GROUND CONTROL</h4>
+ <button class="active" onclick="openPage('dashboard',this)">◈ Mission Overview</button>
+ <button onclick="openPage('astronauts',this)">♙ Astronaut Management</button>
+ <button onclick="openPage('manageMembers',this)">＋ Add / Manage Members</button>
+ <button onclick="openPage('health',this)">♡ Health Monitoring</button>
+ <button onclick="openPage('alerts',this)">⚠ Emergency Center</button>
+ <button onclick="openPage('communication',this)">⌁ Communication</button>
+ <button onclick="openPage('reports',this)">▤ Mission Reports</button>
+
+ <h4>MISSION MANAGEMENT</h4>
+ <button onclick="openPage('missions',this)">✦ Space Missions</button>
+</aside>
+
+<main>
+
+<!-- DASHBOARD -->
+
+<section id="dashboard" class="page active">
+
+<div class="heading">
+ <div>
+  <h1>Ground Control Center</h1>
+  <p class="muted">Centralized astronaut health and mission monitoring</p>
+ </div>
+ <span class="tag">● SIMULATION ACTIVE</span>
+</div>
+
+<div class="mission-bar">
+ <label>SELECT MISSION:</label>
+ <select id="missionSelect" onchange="changeMission()">
+  <option value="all">All Space Missions</option>
+  <option value="ISS Expedition">ISS Expedition</option>
+  <option value="Artemis Mission">Artemis Mission</option>
+  <option value="Mars Exploration">Mars Exploration</option>
+ </select>
+</div>
+
+<div class="grid">
+ <div class="card">
+  <h3>Total Astronauts</h3>
+  <div class="value blue" id="total">6</div>
+  <div class="small">Registered in selected missions</div>
+ </div>
+ <div class="card">
+  <h3>Normal Health</h3>
+  <div class="value green" id="normalCount">4</div>
+  <div class="small">Illustrative monitoring status</div>
+ </div>
+ <div class="card">
+  <h3>Needs Review</h3>
+  <div class="value orange" id="warningCount">2</div>
+  <div class="small">Requires medical review</div>
+ </div>
+ <div class="card">
+  <h3>Critical Alerts</h3>
+  <div class="value red" id="criticalCount">0</div>
+  <div class="small">Simulated emergency alerts</div>
+ </div>
+</div>
+
+<h2>Active Astronauts</h2>
+<div class="astronaut-grid" id="dashboardAstronauts"></div>
+
+<h2>Ground Control Alert Feed</h2>
+<div class="card" id="dashboardAlerts"></div>
+
+</section>
+
+<!-- ASTRONAUT MANAGEMENT -->
+
+<section id="astronauts" class="page">
+
+<div class="heading">
+ <div>
+  <h1>Astronaut Management</h1>
+  <p class="muted">Select an astronaut to access individual health information</p>
+ </div>
+</div>
+
+<div class="mission-bar">
+ <select id="astronautMissionFilter" onchange="renderAstronauts()">
+  <option value="all">All Missions</option>
+  <option>ISS Expedition</option>
+  <option>Artemis Mission</option>
+  <option>Mars Exploration</option>
+ </select>
+</div>
+
+<div class="astronaut-grid" id="allAstronauts"></div>
+
+<h2>Selected Astronaut Profile</h2>
+<div class="card" id="profile"></div>
+
+</section>
+
+
+<!-- ADD / MANAGE ASTRONAUTS -->
+<section id="manageMembers" class="page">
+ <div class="heading">
+  <div>
+   <h1>Add & Manage Astronauts</h1>
+   <p class="muted">Register new crew members, edit their details, assign missions and open their health profiles.</p>
+  </div>
+  <button class="action" onclick="openMemberForm()">＋ Add New Astronaut</button>
+ </div>
+
+ <div class="grid">
+  <div class="card"><h3>Total Registered</h3><div class="value blue" id="memberTotal">0</div></div>
+  <div class="card"><h3>Normal</h3><div class="value green" id="memberNormal">0</div></div>
+  <div class="card"><h3>Needs Review</h3><div class="value orange" id="memberWarning">0</div></div>
+  <div class="card"><h3>Critical</h3><div class="value red" id="memberCritical">0</div></div>
+ </div>
+
+ <div class="card" id="memberFormCard" style="display:none;margin-bottom:18px">
+  <div class="heading">
+   <div><h2 id="memberFormTitle">Register New Astronaut</h2><p class="muted">Fields marked * are required.</p></div>
+   <button class="action danger" type="button" onclick="closeMemberForm()">Close</button>
+  </div>
+  <div class="grid">
+   <div><label class="small" for="memberName">Full name *</label><br><br><input id="memberName" maxlength="70" placeholder="Enter full name" style="width:100%"></div>
+   <div><label class="small" for="memberRole">Mission role *</label><br><br><input id="memberRole" maxlength="70" placeholder="e.g. Flight Engineer" style="width:100%"></div>
+   <div><label class="small" for="memberMission">Space mission *</label><br><br><select id="memberMission" style="width:100%"></select></div>
+   <div><label class="small" for="memberHR">Heart rate (BPM)</label><br><br><input id="memberHR" type="number" min="1" max="250" value="72" style="width:100%"></div>
+   <div><label class="small" for="memberSpO2">SpO₂ (%)</label><br><br><input id="memberSpO2" type="number" min="1" max="100" value="98" style="width:100%"></div>
+   <div><label class="small" for="memberSleep">Sleep (hours)</label><br><br><input id="memberSleep" type="number" min="0" max="24" step="0.1" value="8" style="width:100%"></div>
+  </div>
+  <div class="mission-bar">
+   <button class="action" type="button" onclick="saveMember()">Save Astronaut</button>
+   <button class="action danger" type="button" onclick="closeMemberForm()">Cancel</button>
+   <span class="muted" id="memberFormMessage"></span>
+  </div>
+ </div>
+
+ <div class="card">
+  <h3>Registered Astronauts</h3>
+  <div class="mission-bar">
+   <input id="memberSearch" placeholder="Search by name or astronaut ID" oninput="renderMemberManagement()">
+   <select id="memberMissionFilter" onchange="renderMemberManagement()">
+    <option value="all">All missions</option>
+   </select>
+   <select id="memberStatusFilter" onchange="renderMemberManagement()">
+    <option value="all">All health statuses</option>
+    <option value="Normal">Normal</option>
+    <option value="Warning">Warning</option>
+    <option value="Critical">Critical</option>
+    <option value="Pending">Pending assessment</option>
+   </select>
+  </div>
+  <div class="astronaut-grid" id="memberManagementList"></div>
+ </div>
+</section>
+
+<!-- HEALTH MONITORING -->
+
+<section id="health" class="page">
+
+<div class="heading">
+ <div>
+  <h1>Individual Health Monitoring</h1>
+  <p class="muted">Detailed physiological and psychological health parameters</p>
+ </div>
+</div>
+
+<div class="mission-bar">
+ <label>Astronaut:</label>
+ <select id="healthSelect" onchange="selectHealth()"></select>
+</div>
+
+<div class="card">
+ <h3 id="healthName">Astronaut Health Profile</h3>
+ <p class="muted" id="healthMission"></p>
+</div>
+
+<h2>Cardiovascular Health</h2>
+<div class="grid">
+ <div class="card"><h3>Heart Rate</h3><div class="value blue" id="heart">72 BPM</div></div>
+ <div class="card"><h3>SpO2</h3><div class="value green" id="oxygen">98%</div></div>
+ <div class="card"><h3>Blood Pressure</h3><div class="value blue" id="pressure">118/78</div></div>
+ <div class="card"><h3>HRV</h3><div class="value orange" id="hrv">52 ms</div></div>
+</div>
+
+<div class="card">
+ <h3>Heart Rate History</h3>
+ <div class="chart"><canvas id="heartChart"></canvas></div>
+</div>
+
+<h2>Bone Health</h2>
+<div class="grid">
+ <div class="card"><h3>Bone Density</h3><div class="value blue" id="bone">1.12</div><div class="small">Example g/cm²</div></div>
+ <div class="card"><h3>Bone Density Change</h3><div class="value orange" id="boneChange">-1.2%</div></div>
+ <div class="card"><h3>Exercise</h3><div class="value green" id="exercise">120 min</div></div>
+ <div class="card"><h3>Assessment</h3><div class="value orange">PERIODIC</div></div>
+</div>
+
+<h2>Immune System</h2>
+<div class="grid">
+ <div class="card"><h3>WBC Count</h3><div class="value blue" id="wbc">6.8</div><div class="small">10³ cells/µL</div></div>
+ <div class="card"><h3>Lymphocytes</h3><div class="value green" id="lymph">30%</div></div>
+ <div class="card"><h3>CRP</h3><div class="value orange" id="crp">2.1</div><div class="small">Example mg/L</div></div>
+ <div class="card"><h3>Assessment</h3><div class="value green">REVIEW</div></div>
+</div>
+
+<h2>Behavioral Health</h2>
+<div class="grid">
+ <div class="card"><h3>Sleep</h3><div class="value blue" id="sleep">7.5 H</div></div>
+ <div class="card"><h3>Mood</h3><div class="value green" id="mood">8/10</div></div>
+ <div class="card"><h3>Stress Indicator</h3><div class="value orange" id="stress">35%</div></div>
+ <div class="card"><h3>Wellbeing</h3><div class="value green" id="wellbeing">GOOD</div></div>
+</div>
+
+<p class="muted">All readings are demonstration data. Clinical measurements require validated equipment and medical interpretation.</p>
+
+</section>
+
+<!-- ALERTS -->
+
+<section id="alerts" class="page">
+<div class="heading">
+ <div>
+  <h1>Emergency & Alert Center</h1>
+  <p class="muted">Monitor health alerts across all active missions</p>
+ </div>
+</div>
+
+<div class="grid">
+ <div class="card"><h3>Total Alerts</h3><div class="value blue" id="alertTotal">3</div></div>
+ <div class="card"><h3>Critical</h3><div class="value red" id="alertCritical">0</div></div>
+ <div class="card"><h3>Warnings</h3><div class="value orange" id="alertWarning">3</div></div>
+ <div class="card"><h3>Acknowledged</h3><div class="value green" id="alertAcknowledged">0</div></div>
+</div>
+
+<div class="card">
+ <h3>Health Alert Notifications</h3>
+ <div id="alertList"></div>
+</div>
+</section>
+
+<!-- COMMUNICATION -->
+
+<section id="communication" class="page">
+<h1>Ground-to-Space Communication</h1>
+<p class="muted">Simulated message exchange between mission control and astronauts</p>
+
+<div class="grid">
+ <div class="card"><h3>Connected Missions</h3><div class="value green">3</div></div>
+ <div class="card"><h3>Astronauts Registered</h3><div class="value blue">6</div></div>
+ <div class="card"><h3>Message Mode</h3><div class="value orange">SIMULATED</div></div>
+ <div class="card"><h3>Ground Station</h3><div class="value green">ONLINE</div></div>
+</div>
+
+<div class="two">
+ <div class="card">
+  <h3>Send Ground Control Message</h3>
+  <label class="small">Select Astronaut</label><br><br>
+  <select id="messageAstronaut" style="width:100%"></select>
+  <br><br>
+  <label class="small">Message Category</label><br><br>
+  <select id="messageType" style="width:100%">
+   <option>Medical Check-in Request</option>
+   <option>Health Monitoring Instruction</option>
+   <option>Emergency Medical Notification</option>
+   <option>Daily Wellness Assessment</option>
+   <option>Mission Update</option>
+  </select>
+  <br><br>
+  <label class="small">Message</label><br><br>
+  <textarea id="messageText" placeholder="Enter message to astronaut..."></textarea>
+  <br><br>
+  <button class="action" onclick="sendMessage()">Transmit Message</button>
+  <p id="messageResult" class="muted"></p>
+ </div>
+
+ <div class="card">
+  <h3>Communication History</h3>
+  <div id="messages"><p class="muted">No messages transmitted yet.</p></div>
+ </div>
+</div>
+</section>
+
+<!-- REPORTS -->
+
+<section id="reports" class="page">
+<h1>Mission Health Reports</h1>
+<p class="muted">Health monitoring summary for ground medical teams</p>
+<br>
+<div class="card">
+ <h3>Mission Report</h3>
+ <table>
+  <thead>
+   <tr><th>Astronaut</th><th>Mission</th><th>Status</th><th>Heart Rate</th><th>Sleep</th></tr>
+  </thead>
+  <tbody id="reportTable"></tbody>
+ </table>
+ <br>
+ <button class="action" onclick="window.print()">Print Mission Report</button>
+</div>
+</section>
+
+<!-- MISSIONS -->
+
+<section id="missions" class="page">
+<h1>Space Mission Management</h1>
+<p class="muted">Manage multiple active space missions</p>
+<br>
+<div class="grid">
+ <div class="card">
+  <h3>ISS Expedition</h3>
+  <div class="value blue" id="missionCountISS">02</div>
+  <p class="small">Astronauts | Low Earth Orbit</p>
+  <br><span class="tag">ACTIVE</span>
+ </div>
+ <div class="card">
+  <h3>Artemis Mission</h3>
+  <div class="value blue" id="missionCountArtemis">02</div>
+  <p class="small">Astronauts | Lunar Exploration</p>
+  <br><span class="tag">ACTIVE</span>
+ </div>
+ <div class="card">
+  <h3>Mars Exploration</h3>
+  <div class="value blue" id="missionCountMars">02</div>
+  <p class="small">Astronauts | Deep Space Simulation</p>
+  <br><span class="tag">ACTIVE SIMULATION</span>
+ </div>
+</div>
+<div class="card">
+ <h3>Mission Operations</h3>
+ <p class="muted">Select a mission using the dashboard mission selector to view its astronauts and health status.</p>
+</div>
+</section>
+
+<footer>
+ASTROCARE | SPACE MEDICAL MONITORING & GROUND CONTROL<br>
+Educational Prototype | Demo readings | Astronaut profiles saved in this browser | Not a clinical diagnostic system
+</footer>
+
+</main>
+</div>
+
+<script>
+
+// ASTRONAUT DATABASE - DEMONSTRATION DATA
+
+let astronauts = [
+{
+id:"A01",name:"Alex Morgan",mission:"ISS Expedition",role:"Mission Commander",
+hr:72,spo2:98,bp:"118/78",hrv:52,
+bone:1.12,boneChange:"-1.2%",exercise:120,
+wbc:6.8,lymph:30,crp:2.1,
+sleep:7.5,mood:8,stress:25,status:"Normal"
+},
+{
+id:"A02",name:"Sarah Johnson",mission:"ISS Expedition",role:"Flight Engineer",
+hr:88,spo2:97,bp:"122/80",hrv:45,
+bone:1.10,boneChange:"-1.5%",exercise:100,
+wbc:6.4,lymph:28,crp:2.4,
+sleep:6.5,mood:7,stress:55,status:"Warning"
+},
+{
+id:"A03",name:"David Wilson",mission:"Artemis Mission",role:"Lunar Pilot",
+hr:76,spo2:99,bp:"116/76",hrv:58,
+bone:1.15,boneChange:"-0.8%",exercise:130,
+wbc:7.1,lymph:32,crp:1.8,
+sleep:8,mood:9,stress:20,status:"Normal"
+},
+{
+id:"A04",name:"Emily Carter",mission:"Artemis Mission",role:"Science Specialist",
+hr:92,spo2:96,bp:"128/84",hrv:39,
+bone:1.08,boneChange:"-2.1%",exercise:85,
+wbc:7.4,lymph:27,crp:3.2,
+sleep:5.8,mood:6,stress:68,status:"Warning"
+},
+{
+id:"A05",name:"Michael Brown",mission:"Mars Exploration",role:"Mission Scientist",
+hr:70,spo2:98,bp:"115/75",hrv:60,
+bone:1.14,boneChange:"-0.9%",exercise:140,
+wbc:6.6,lymph:31,crp:2.0,
+sleep:7.8,mood:9,stress:18,status:"Normal"
+},
+{
+id:"A06",name:"Olivia Davis",mission:"Mars Exploration",role:"Medical Officer",
+hr:74,spo2:98,bp:"119/79",hrv:54,
+bone:1.11,boneChange:"-1.3%",exercise:110,
+wbc:6.9,lymph:29,crp:2.3,
+sleep:7.2,mood:8,stress:32,status:"Normal"
+}
+];
+
+const STORAGE_KEY = "astrocare_astronauts_v1";
+const MISSION_KEY = "astrocare_missions_v1";
+let missions = ["ISS Expedition", "Artemis Mission", "Mars Exploration"];
+
+function loadSavedData(){
+ try {
+  const saved = localStorage.getItem(STORAGE_KEY);
+  if(saved){
+   const parsed = JSON.parse(saved);
+   if(Array.isArray(parsed)) astronauts = parsed;
+  }
+  const savedMissions = localStorage.getItem(MISSION_KEY);
+  if(savedMissions){
+   const parsedMissions = JSON.parse(savedMissions);
+   if(Array.isArray(parsedMissions) && parsedMissions.length) missions = parsedMissions;
+  }
+ } catch(error) {
+  console.warn("Could not load saved ASTROCARE data", error);
+ }
+}
+
+function saveData(){
+ try {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(astronauts));
+  localStorage.setItem(MISSION_KEY, JSON.stringify(missions));
+ } catch(error) {
+  alert("Your browser could not save the data. Check browser storage settings.");
+ }
+}
+
+function escapeHTML(value){
+ return String(value ?? "").replace(/[&<>"']/g, char => ({
+  "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+ }[char]));
+}
+
+function nextAstronautID(){
+ const highest = astronauts.reduce((max, a) => {
+  const number = Number(String(a.id).replace(/^A/i,""));
+  return Number.isFinite(number) ? Math.max(max, number) : max;
+ }, 0);
+ return "A" + String(highest + 1).padStart(3, "0");
+}
+
+let selectedID = "A01";
+let currentMission = "all";
+let messages = [];
+let alerts = [
+ {id:1,astronaut:"A02",type:"Behavioral Health",text:"Sleep duration below configured monitoring target.",level:"warning",ack:false},
+ {id:2,astronaut:"A04",type:"Cardiovascular",text:"Heart rate elevated relative to demonstration baseline.",level:"warning",ack:false},
+ {id:3,astronaut:"A04",type:"Behavioral Health",text:"Stress indicator increased in simulated assessment.",level:"warning",ack:false}
+];
+
+
+// ADD / EDIT / DELETE ASTRONAUTS
+let editingAstronautID = null;
+
+function updateMissionOptions(){
+ const options = missions.map(m => `<option value="${escapeHTML(m)}">${escapeHTML(m)}</option>`).join("");
+ const formSelect = document.getElementById("memberMission");
+ const filterSelect = document.getElementById("memberMissionFilter");
+ if(formSelect) formSelect.innerHTML = options;
+ if(filterSelect){
+  const selected = filterSelect.value || "all";
+  filterSelect.innerHTML = `<option value="all">All missions</option>` + options;
+  filterSelect.value = missions.includes(selected) ? selected : "all";
+ }
+}
+
+function openMemberForm(id=null){
+ editingAstronautID = id;
+ updateMissionOptions();
+ const form = document.getElementById("memberFormCard");
+ const a = id ? astronauts.find(x => x.id === id) : null;
+ document.getElementById("memberFormTitle").innerText = a ? "Edit Astronaut — " + a.id : "Register New Astronaut";
+ document.getElementById("memberName").value = a?.name || "";
+ document.getElementById("memberRole").value = a?.role || "";
+ document.getElementById("memberMission").value = a?.mission || missions[0];
+ document.getElementById("memberHR").value = a?.hr ?? 72;
+ document.getElementById("memberSpO2").value = a?.spo2 ?? 98;
+ document.getElementById("memberSleep").value = a?.sleep ?? 8;
+ document.getElementById("memberFormMessage").innerText = "";
+ form.style.display = "block";
+ form.scrollIntoView({behavior:"smooth", block:"start"});
+}
+
+function closeMemberForm(){
+ document.getElementById("memberFormCard").style.display = "none";
+ editingAstronautID = null;
+}
+
+function saveMember(){
+ const name = document.getElementById("memberName").value.trim();
+ const role = document.getElementById("memberRole").value.trim();
+ const mission = document.getElementById("memberMission").value;
+ const hr = Number(document.getElementById("memberHR").value);
+ const spo2 = Number(document.getElementById("memberSpO2").value);
+ const sleep = Number(document.getElementById("memberSleep").value);
+
+ if(!name || !role || !mission){
+  alert("Please enter the astronaut name, role and mission.");
+  return;
+ }
+ if(!Number.isFinite(hr) || hr < 1 || hr > 250 ||
+    !Number.isFinite(spo2) || spo2 < 1 || spo2 > 100 ||
+    !Number.isFinite(sleep) || sleep < 0 || sleep > 24){
+  alert("Enter valid values: heart rate 1–250, SpO₂ 1–100, sleep 0–24 hours.");
+  return;
+ }
+
+ if(editingAstronautID){
+  const a = astronauts.find(x => x.id === editingAstronautID);
+  if(!a) return;
+  a.name = name;
+  a.role = role;
+  a.mission = mission;
+  a.hr = hr;
+  a.spo2 = spo2;
+  a.sleep = sleep;
+ } else {
+  const id = nextAstronautID();
+  astronauts.push({
+   id, name, role, mission, hr, spo2,
+   bp:"Not recorded", hrv:null,
+   bone:null, boneChange:"Not assessed", exercise:null,
+   wbc:null, lymph:null, crp:null,
+   sleep, mood:null, stress:null, status:"Pending"
+  });
+  selectedID = id;
+ }
+
+ saveData();
+ closeMemberForm();
+ refreshAllViews();
+}
+
+function deleteMember(id){
+ const a = astronauts.find(x => x.id === id);
+ if(!a) return;
+ if(!confirm(`Delete ${a.name} (${a.id})? This removes the astronaut from this browser's saved list.`)) return;
+
+ astronauts = astronauts.filter(x => x.id !== id);
+ alerts = alerts.filter(x => x.astronaut !== id);
+ messages = messages.filter(x => x.id !== id);
+ if(selectedID === id) selectedID = astronauts[0]?.id || "";
+
+ saveData();
+ refreshAllViews();
+}
+
+function renderMemberManagement(){
+ const search = (document.getElementById("memberSearch")?.value || "").toLowerCase();
+ const mission = document.getElementById("memberMissionFilter")?.value || "all";
+ const status = document.getElementById("memberStatusFilter")?.value || "all";
+
+ const list = astronauts.filter(a =>
+  (a.name.toLowerCase().includes(search) || a.id.toLowerCase().includes(search)) &&
+  (mission === "all" || a.mission === mission) &&
+  (status === "all" || a.status === status)
+ );
+
+ document.getElementById("memberManagementList").innerHTML = list.map(a => `
+  <div class="card astronaut">
+   <div class="avatar">👨‍🚀</div>
+   <h3>${escapeHTML(a.name)}</h3>
+   <p class="small">${escapeHTML(a.id)} | ${escapeHTML(a.role)}</p>
+   <p class="small">${escapeHTML(a.mission)}</p>
+   <div class="status ${String(a.status).toLowerCase()}">● ${escapeHTML(a.status.toUpperCase())}</div>
+   <div class="metric"><span>Heart Rate</span><span>${a.hr ?? "Not recorded"}${a.hr != null ? " BPM" : ""}</span></div>
+   <div class="metric"><span>SpO₂</span><span>${a.spo2 ?? "Not recorded"}${a.spo2 != null ? "%" : ""}</span></div>
+   <div class="member-actions">
+    <button class="action" onclick="openMemberForm('${escapeHTML(a.id)}')">Edit</button>
+    <button class="action" onclick="selectAstronaut('${escapeHTML(a.id)}')">Monitor</button>
+    <button class="action danger" onclick="deleteMember('${escapeHTML(a.id)}')">Delete</button>
+   </div>
+  </div>
+ `).join("") || "<p class='muted'>No astronauts match your search.</p>";
+
+ document.getElementById("memberTotal").innerText = astronauts.length;
+ document.getElementById("memberNormal").innerText = astronauts.filter(a=>a.status==="Normal").length;
+ document.getElementById("memberWarning").innerText = astronauts.filter(a=>a.status==="Warning").length;
+ document.getElementById("memberCritical").innerText = astronauts.filter(a=>a.status==="Critical").length;
+}
+
+function updateMissionCounts(){
+ const counts = {
+  "ISS Expedition":"missionCountISS",
+  "Artemis Mission":"missionCountArtemis",
+  "Mars Exploration":"missionCountMars"
+ };
+ Object.entries(counts).forEach(([mission,id])=>{
+  const el=document.getElementById(id);
+  if(el) el.innerText=astronauts.filter(a=>a.mission===mission).length;
+ });
+}
+
+function refreshAllViews(){
+ updateMissionCounts();
+ updateSelectors();
+ updateMissionOptions();
+ renderDashboard();
+ renderAstronauts();
+ renderMemberManagement();
+ renderProfile();
+ renderAlerts();
+ renderReports();
+
+ const healthSelect = document.getElementById("healthSelect");
+ if(selectedID && astronauts.length){
+  healthSelect.value = selectedID;
+  showHealth();
+ } else {
+  document.getElementById("healthName").innerText = "No astronaut registered";
+  document.getElementById("healthMission").innerText = "Add an astronaut to begin monitoring.";
+ }
+}
+
+
+function openPage(id,button){
+ document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
+ document.getElementById(id).classList.add("active");
+ document.querySelectorAll(".sidebar button").forEach(b=>b.classList.remove("active"));
+ if(button) button.classList.add("active");
+ if(id==="reports")renderReports();
+}
+
+function filteredAstronauts(){
+ return astronauts.filter(a=>currentMission==="all"||a.mission===currentMission);
+}
+
+function astronautCard(a){
+ return `<div class="card astronaut ${selectedID===a.id?'selected':''}"
+ onclick="selectAstronaut('${a.id}')">
+ <div class="avatar">👨‍🚀</div>
+ <h3>${a.name}</h3>
+ <p class="small">${a.id} | ${a.role}</p>
+ <p class="small">${a.mission}</p>
+ <div class="status ${a.status.toLowerCase()}">● ${a.status.toUpperCase()}</div>
+ <div class="metric"><span>Heart Rate</span><span>${a.hr} BPM</span></div>
+ <div class="metric"><span>SpO2</span><span>${a.spo2}%</span></div>
+ <br><button class="action">View Health Profile</button>
+ </div>`;
+}
+
+function renderDashboard(){
+ let list=filteredAstronauts();
+ document.getElementById("total").innerText=list.length;
+ document.getElementById("normalCount").innerText=list.filter(a=>a.status==="Normal").length;
+ document.getElementById("warningCount").innerText=list.filter(a=>a.status==="Warning").length;
+ document.getElementById("criticalCount").innerText=list.filter(a=>a.status==="Critical").length;
+ document.getElementById("dashboardAstronauts").innerHTML=list.map(astronautCard).join("");
+ document.getElementById("dashboardAlerts").innerHTML=alerts
+ .slice(0,5).map(a=>`<div class="alert ${a.level==='critical'?'critical':'warning'}">
+ ${a.level.toUpperCase()} | ${a.astronaut} | ${a.type}<br>${a.text}
+ </div>`).join("")||"No alerts";
+}
+
+function changeMission(){
+ currentMission=document.getElementById("missionSelect").value;
+ renderDashboard();
+}
+
+function renderAstronauts(){
+ let filter=document.getElementById("astronautMissionFilter").value;
+ let list=astronauts.filter(a=>filter==="all"||a.mission===filter);
+ document.getElementById("allAstronauts").innerHTML=list.map(astronautCard).join("");
+ renderProfile();
+}
+
+function selectAstronaut(id){
+ selectedID=id;
+ let a=astronauts.find(x=>x.id===id);
+ renderDashboard();
+ renderAstronauts();
+ document.getElementById("healthSelect").value=id;
+ showHealth();
+ openPage("health",document.querySelectorAll(".sidebar button")[2]);
+}
+
+function renderProfile(){
+ let a=astronauts.find(x=>x.id===selectedID);
+ if(!a){document.getElementById("profile").innerHTML="<p class='muted'>No astronaut selected. Add an astronaut to begin.</p>";return;}
+ document.getElementById("profile").innerHTML=`
+ <h3>${escapeHTML(a.name)} (${escapeHTML(a.id)})</h3>
+ <div class="metric"><span>Mission</span><span>${a.mission}</span></div>
+ <div class="metric"><span>Role</span><span>${a.role}</span></div>
+ <div class="metric"><span>Health status</span><span>${a.status}</span></div>
+ <div class="metric"><span>Heart Rate</span><span>${a.hr} BPM</span></div>
+ <div class="metric"><span>Blood Oxygen</span><span>${a.spo2}%</span></div>`;
+}
+
+function showHealth(){
+ let a=astronauts.find(x=>x.id===selectedID);
+ if(!a){
+  ["heart","oxygen","pressure","hrv","bone","boneChange","exercise","wbc","lymph","crp","sleep","mood","stress","wellbeing"].forEach(id=>{
+   const el=document.getElementById(id); if(el) el.innerText="Not recorded";
+  });
+  document.getElementById("healthName").innerText="No astronaut selected";
+  document.getElementById("healthMission").innerText="Add an astronaut to begin monitoring.";
+  return;
+ }
+ document.getElementById("healthName").innerText=a.name+" | "+a.id;
+ document.getElementById("healthMission").innerText=a.mission+" | "+a.role;
+ document.getElementById("heart").innerText=a.hr+" BPM";
+ document.getElementById("oxygen").innerText=a.spo2+"%";
+ document.getElementById("pressure").innerText=a.bp;
+ document.getElementById("hrv").innerText=a.hrv+" ms";
+ document.getElementById("bone").innerText=a.bone;
+ document.getElementById("boneChange").innerText=a.boneChange;
+ document.getElementById("exercise").innerText=a.exercise+" min";
+ document.getElementById("wbc").innerText=a.wbc;
+ document.getElementById("lymph").innerText=a.lymph+"%";
+ document.getElementById("crp").innerText=a.crp;
+ document.getElementById("sleep").innerText=a.sleep+" H";
+ document.getElementById("mood").innerText=a.mood+"/10";
+ document.getElementById("stress").innerText=a.stress+"%";
+ document.getElementById("wellbeing").innerText=a.status.toUpperCase();
+}
+
+function selectHealth(){
+ selectedID=document.getElementById("healthSelect").value;
+ showHealth();
+}
+
+function renderAlerts(){
+ document.getElementById("alertList").innerHTML=alerts.map(a=>`
+ <div class="alert ${a.level==='critical'?'critical':'warning'}">
+ <strong>${a.level.toUpperCase()} | ${a.astronaut}</strong><br>
+ ${a.type}: ${a.text}<br><br>
+ ${a.ack?'<span class="green">Acknowledged</span>':
+ `<button class="action" onclick="ackAlert(${a.id})">Acknowledge</button>`}
+ </div>`).join("");
+ document.getElementById("alertTotal").innerText=alerts.length;
+ document.getElementById("alertCritical").innerText=alerts.filter(a=>a.level==="critical"&&!a.ack).length;
+ document.getElementById("alertWarning").innerText=alerts.filter(a=>a.level==="warning"&&!a.ack).length;
+ document.getElementById("alertAcknowledged").innerText=alerts.filter(a=>a.ack).length;
+}
+
+function ackAlert(id){
+ let a=alerts.find(x=>x.id===id);
+ a.ack=true;
+ renderAlerts();
+ renderDashboard();
+}
+
+function renderReports(){
+ document.getElementById("reportTable").innerHTML=filteredAstronauts().map(a=>`
+ <tr>
+ <td>${a.name} (${a.id})</td>
+ <td>${a.mission}</td>
+ <td>${a.status}</td>
+ <td>${a.hr} BPM</td>
+ <td>${a.sleep} H</td>
+ </tr>`).join("");
+}
+
+function sendMessage(){
+ let id=document.getElementById("messageAstronaut").value;
+ let a=astronauts.find(x=>x.id===id);
+ let type=document.getElementById("messageType").value;
+ let msg=document.getElementById("messageText").value.trim();
+ if(!msg){alert("Please enter a message.");return;}
+ let time=new Date().toLocaleString();
+ messages.unshift({name:a.name,id,type,msg,time});
+ document.getElementById("messages").innerHTML=messages.map(m=>`
+ <div class="alert normal">
+ <strong>GROUND CONTROL → ${m.name}</strong><br>
+ ${m.type}<br>${m.msg}<br>
+ <span class="small">${m.time} | Locally simulated transmission</span>
+ </div>`).join("");
+ document.getElementById("messageText").value="";
+ document.getElementById("messageResult").innerText="Message added to local simulation history.";
+}
+
+function updateSelectors(){
+ let options=astronauts.map(a=>`<option value="${escapeHTML(a.id)}">${escapeHTML(a.name)} (${escapeHTML(a.id)})</option>`).join("");
+ document.getElementById("healthSelect").innerHTML=options || '<option value="">No astronauts registered</option>';
+ document.getElementById("messageAstronaut").innerHTML=options || '<option value="">No astronauts registered</option>';
+ if(selectedID && astronauts.some(a=>a.id===selectedID)){
+  document.getElementById("healthSelect").value=selectedID;
+  document.getElementById("messageAstronaut").value=selectedID;
+ }
+}
+
+function createChart(){
+ if(!window.Chart)return;
+ new Chart(document.getElementById("heartChart"),{
+ type:"line",
+ data:{
+ labels:["-9","-8","-7","-6","-5","-4","-3","-2","-1","Now"],
+ datasets:[{
+ label:"Heart Rate (BPM)",
+ data:[70,72,74,71,75,73,72,74,71,72],
+ borderColor:"#39d9ff",
+ backgroundColor:"rgba(57,217,255,.12)",
+ fill:true,tension:.4
+ }]
+ },
+ options:{
+ responsive:true,maintainAspectRatio:false,
+ plugins:{legend:{labels:{color:"white"}}},
+ scales:{
+ x:{ticks:{color:"#9aacc9"},grid:{color:"#293b59"}},
+ y:{ticks:{color:"#9aacc9"},grid:{color:"#293b59"}}
+ }
+ }
+ });
+}
+
+// SIMULATED LIVE MONITORING
+
+setInterval(()=>{
+ astronauts.forEach(a=>{
+   // Only simulate live telemetry for astronauts with an initialized sample heart-rate and SpO2.
+   if(Number.isFinite(a.hr) && Number.isFinite(a.spo2)){
+    a.hr += Math.floor(Math.random()*5)-2;
+    a.hr = Math.max(60,Math.min(110,a.hr));
+    a.spo2 = Math.max(94,Math.min(100,a.spo2+Math.floor(Math.random()*3)-1));
+   }
+ });
+ saveData();
+ renderDashboard();
+ renderAstronauts();
+ renderMemberManagement();
+ if(document.getElementById("health").classList.contains("active"))showHealth();
+},5000);
+
+loadSavedData();
+updateMissionCounts();
+updateSelectors();
+updateMissionOptions();
+renderDashboard();
+renderAstronauts();
+renderProfile();
+renderMemberManagement();
+showHealth();
+renderAlerts();
+renderReports();
+createChart();
+
+</script>
+</body>
+</html>
